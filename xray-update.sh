@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "$(date) 开始执行 Xray 更新任务"
 set -e
 
 # 检查 jq 是否已安装

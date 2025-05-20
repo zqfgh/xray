@@ -1,7 +1,8 @@
 #!/bin/bash
-echo "$(date) 开始执行 Xray 更新任务"
 set -e
 
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+echo "$(date) 开始执行 Xray 更新任务"
 # 检查 jq 是否已安装
 if ! command -v jq >/dev/null 2>&1; then
     echo "未检测到 jq，正在尝试安装..."

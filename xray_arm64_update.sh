@@ -4,6 +4,11 @@ set -e
 # 设置 HTTP 代理（如需取消，注释掉下面两行）
 export http_proxy="http://127.0.0.1:7890"
 export https_proxy="http://127.0.0.1:7890"
+#取消代理
+#unset https_proxy
+#unset https_proxy
+#查看代理状态
+#env | grep -i proxy
 
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 LOG_FILE="/var/log/xray_update.log"

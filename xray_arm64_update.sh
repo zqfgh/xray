@@ -16,7 +16,7 @@ if [ -z "$X_RAY_BIN" ]; then
 fi
 
 if [ -z "$X_RAY_BIN" ]; then
-    echo "未检测到 xray 可执行文件，请先安装 Xray。" | tee -a "$LOG_FILE"
+    echo "❌ Xray executable not found. Please install Xray first." | tee -a "$LOG_FILE"
     exit 1
 fi
 
@@ -24,20 +24,20 @@ BACKUP_DIR=$(dirname "$X_RAY_BIN")
 
 # 测试是否可以直连 GitHub
 if curl --connect-timeout 5 -s https://github.com > /dev/null 2>&1; then
-    echo "检测到可直连 GitHub，继续更新。" | tee -a "$LOG_FILE"
+    echo "🌐 GitHub is directly accessible. Proceeding without proxy." | tee -a "$LOG_FILE"
 		#unset http_proxy
 		#unset https_proxy
 else
-    echo "无法直连 GitHub，启用 HTTP 代理 127.0.0.1:7890" | tee -a "$LOG_FILE"
+    echo "⚠️ GitHub not reachable directly. Enabling proxy" | tee -a "$LOG_FILE"
     export http_proxy="http://127.0.0.1:7890"
     export https_proxy="http://127.0.0.1:7890"
 fi
 
-echo "$(date) 开始执行 Xray 更新任务" | tee -a "$LOG_FILE"
+echo "$(date) Starting Xray update task..." | tee -a "$LOG_FILE"
 
 # 检查 jq 是否已安装
 if ! command -v jq >/dev/null 2>&1; then
-    echo "未检测到 jq，正在尝试安装..." | tee -a "$LOG_FILE"
+    echo "📦 jq not found. Attempting to install..." | tee -a "$LOG_FILE"
     if command -v apt >/dev/null 2>&1; then
         apt update && apt install -y jq
     elif command -v apk >/dev/null 2>&1; then
@@ -45,7 +45,7 @@ if ! command -v jq >/dev/null 2>&1; then
     elif command -v yum >/dev/null 2>&1; then
         yum install -y jq
     else
-        echo "无法自动安装 jq，请手动安装后重试。" | tee -a "$LOG_FILE"
+        echo "❌ Cannot install jq automatically. Please install it manually." | tee -a "$LOG_FILE"
         exit 1
     fi
 fi
@@ -66,20 +66,20 @@ case "$arch" in
         xray_file="Xray-linux-arm32-v6.zip"
         ;;
     *)
-        echo "不支持的架构: $arch" | tee -a "$LOG_FILE"
+        echo "❌ Unsupported architecture: $arch" | tee -a "$LOG_FILE"
         exit 1
         ;;
 esac
 
 # 2. 获取当前版本
 if [ ! -x "$X_RAY_BIN" ]; then
-    echo "未安装 Xray 或 $X_RAY_BIN 不可执行。" | tee -a "$LOG_FILE"
+    echo "❌ Detected Xray binary is not executable: $X_RAY_BIN" | tee -a "$LOG_FILE"
     exit 1
 fi
 current_version=$("$X_RAY_BIN" -version 2>/dev/null | grep 'Xray' | head -n1 | awk '{print $2}')
 #测试脚本能否正常使用
 #current_version="25.5.15"
-echo "当前版本：$current_version" | tee -a "$LOG_FILE"
+echo "🔍 Current version: $current_version" | tee -a "$LOG_FILE"
 
 # 3. 获取最新版本信息
 release_info=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest)
@@ -87,30 +87,30 @@ download_url=$(echo "$release_info" | jq -r ".assets[] | select(.name==\"$xray_f
 latest_version=$(echo "$release_info" | jq -r ".tag_name")
 
 if [[ -z "$download_url" || "$download_url" == "null" ]]; then
-    echo "无法获取对应架构 [$arch] 的下载地址。" | tee -a "$LOG_FILE"
+    echo "❌ Cannot find download URL for [$arch] architecture." | tee -a "$LOG_FILE"
     exit 1
 fi
 
-echo "最新版本：$latest_version" | tee -a "$LOG_FILE"
+echo "📌 Latest version: $latest_version" | tee -a "$LOG_FILE"
 
 clean_current_version=$(echo "$current_version" | sed 's/^v//')
 clean_latest_version=$(echo "$latest_version" | sed 's/^v//')
 
 # 4. 版本对比
 if [[ "$clean_current_version" == "$clean_latest_version" ]]; then
-    echo "✅ 当前 Xray 已是最新版本，无需更新。" | tee -a "$LOG_FILE"
+    echo "✅ Xray is already up to date." | tee -a "$LOG_FILE"
     exit 0
 fi
 
-echo "⬇️ 开始下载新版本..." | tee -a "$LOG_FILE"
+echo "⬇️ Downloading new version..." | tee -a "$LOG_FILE"
 tmp_dir=$(mktemp -d)
 wget -O "$tmp_dir/$xray_file" "$download_url"
 
-echo "📦 解压文件..." | tee -a "$LOG_FILE"
+echo "📦 Extracting files..." | tee -a "$LOG_FILE"
 unzip -o "$tmp_dir/$xray_file" -d "$tmp_dir/xray-update"
 
 # 5. 停止 Xray 服务，支持 systemd 或 OpenWrt init.d
-echo "停止 Xray 服务..." | tee -a "$LOG_FILE"
+echo "🛑 Stopping Xray service..." | tee -a "$LOG_FILE"
 if command -v systemctl >/dev/null 2>&1; then
     systemctl stop xray
 else
@@ -118,7 +118,7 @@ else
 fi
 
 # 6. 备份旧版本，只保留最近一次备份
-echo "备份旧版本..." | tee -a "$LOG_FILE"
+echo "🗂️ Backing up current version..." | tee -a "$LOG_FILE"
 backup_file="${BACKUP_DIR}/xray.bak"
 if [ -f "$backup_file" ]; then
     rm -f "$backup_file"
@@ -126,12 +126,12 @@ fi
 cp "$X_RAY_BIN" "$backup_file"
 
 # 7. 替换 Xray 并赋权
-echo "替换 Xray 核心..." | tee -a "$LOG_FILE"
+echo "🔧 Replacing Xray binary..." | tee -a "$LOG_FILE"
 mv "$tmp_dir/xray-update/xray" "$X_RAY_BIN"
 chmod +x "$X_RAY_BIN"
 
 # 8. 启动 Xray 服务
-echo "启动 Xray 服务..." | tee -a "$LOG_FILE"
+echo "🚀 Starting Xray service..." | tee -a "$LOG_FILE"
 if command -v systemctl >/dev/null 2>&1; then
     systemctl start xray
 else
@@ -139,7 +139,7 @@ else
 fi
 
 # 9. 清理临时文件
-echo "清理临时文件..." | tee -a "$LOG_FILE"
+echo "🧹 Cleaning up..." | tee -a "$LOG_FILE"
 rm -rf "$tmp_dir"
 
-echo "✅ Xray 已成功从版本 $current_version 更新至 $latest_version 并完成重启。" | tee -a "$LOG_FILE"
+echo "✅ Xray successfully updated from version $current_version to $latest_version." | tee -a "$LOG_FILE"

@@ -1,19 +1,37 @@
 #!/bin/bash
 set -e
 
-# 设置 HTTP 代理（如需取消，注释掉下面两行）
-export http_proxy="http://127.0.0.1:7890"
-export https_proxy="http://127.0.0.1:7890"
-#取消代理
-#unset https_proxy
-#unset https_proxy
-#查看代理状态
-#env | grep -i proxy
-
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 LOG_FILE="/var/log/xray_update.log"
-BACKUP_DIR="/usr/bin"
-X_RAY_BIN="${BACKUP_DIR}/xray"
+
+# 检测 Xray 路径
+X_RAY_BIN=$(command -v xray)
+if [ -z "$X_RAY_BIN" ]; then
+    for try_path in /usr/bin/xray /usr/local/bin/xray /usr/local/sbin/xray; do
+        if [ -x "$try_path" ]; then
+            X_RAY_BIN="$try_path"
+            break
+        fi
+    done
+fi
+
+if [ -z "$X_RAY_BIN" ]; then
+    echo "未检测到 xray 可执行文件，请先安装 Xray。" | tee -a "$LOG_FILE"
+    exit 1
+fi
+
+BACKUP_DIR=$(dirname "$X_RAY_BIN")
+
+# 测试是否可以直连 GitHub
+if curl --connect-timeout 5 -s https://github.com > /dev/null 2>&1; then
+    echo "检测到可直连 GitHub，继续更新。" | tee -a "$LOG_FILE"
+		#unset http_proxy
+		#unset https_proxy
+else
+    echo "无法直连 GitHub，启用 HTTP 代理 127.0.0.1:7890" | tee -a "$LOG_FILE"
+    export http_proxy="http://127.0.0.1:7890"
+    export https_proxy="http://127.0.0.1:7890"
+fi
 
 echo "$(date) 开始执行 Xray 更新任务" | tee -a "$LOG_FILE"
 

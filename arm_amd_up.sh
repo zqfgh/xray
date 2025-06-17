@@ -23,8 +23,8 @@ echo "$(date) 开始执行 Xray 更新任务" | tee -a "$LOG_FILE"
 echo "$(date) 检测 GitHub 直连状态..." | tee -a "$LOG_FILE"
 if curl --connect-timeout 10 -s https://github.com > /dev/null 2>&1; then # 增加超时时间
     echo "$(date) 检测到可直连 GitHub，取消代理设置。" | tee -a "$LOG_FILE"
-    unset http_proxy
-    unset https_proxy
+    #unset http_proxy
+    #unset https_proxy
 else
     echo "$(date) 无法直连 GitHub，启用 HTTP 代理 127.0.0.1:7890" | tee -a "$LOG_FILE"
     export http_proxy="http://127.0.0.1:7890"

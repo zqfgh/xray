@@ -29,8 +29,8 @@ if curl --connect-timeout 5 -s https://github.com > /dev/null 2>&1; then
 		#unset https_proxy
 else
     echo "⚠️ GitHub not reachable directly. Enabling proxy" | tee -a "$LOG_FILE"
-    export http_proxy="http://127.0.0.1:7890"
-    export https_proxy="http://127.0.0.1:7890"
+    export http_proxy="http://127.0.0.1:1080"
+    export https_proxy="http://127.0.0.1:1080"
 fi
 
 echo "$(date) Starting Xray update task..." | tee -a "$LOG_FILE"

@@ -26,7 +26,7 @@ if curl --connect-timeout 10 -s https://github.com > /dev/null 2>&1; then # Incr
     #unset http_proxy
     #unset https_proxy
 else
-    echo "$(date) Cannot connect to GitHub directly, enabling HTTP proxy 127.0.0.1:7890" | tee -a "$LOG_FILE"
+    echo "$(date) Cannot connect to GitHub directly, enabling HTTP proxy 127.0.0.1:1080" | tee -a "$LOG_FILE"
     export http_proxy="http://127.0.0.1:1080"
     export https_proxy="http://127.0.0.1:1080"
 
